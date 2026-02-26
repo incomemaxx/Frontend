@@ -4,9 +4,9 @@ import org.example.matching.model.Order;
 import org.example.matching.model.Trade;
 
 public interface WalletService {
-    boolean reserveforOrder(Order order);
+    boolean reserveForOrder(Order order);
     void  releaseReservation(String Oderid);
-    void SettleTrade(Trade trade);
+    void settleTrade(Trade trade);
 
 
     }

@@ -25,7 +25,7 @@ public class InMemoryWalletService implements WalletService {
     }
 
     @Override
-    public boolean reserveforOrder(Order order) {
+    public boolean reserveForOrder(Order order) {
         String userId = order.getUserId();
         Wallet w = ensureWallet(userId);
 
@@ -67,7 +67,7 @@ public void releaseReservation(String orderId){
 
 
     @Override
-    public void SettleTrade(Trade trade) {
+    public void settleTrade(Trade trade) {
         Order buy = orderRepository.findById(trade.getBuyOrderId()).orElse(null);
         Order sell = orderRepository.findById(trade.getSellOrderId()).orElse(null);
 
