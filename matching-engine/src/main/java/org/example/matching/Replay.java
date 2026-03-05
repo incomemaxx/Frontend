@@ -85,7 +85,7 @@ public class Replay {
                     int qty = Integer.parseInt(first[5]);
                     long ts = Long.parseLong(first[6]);
                     OrderSide side = OrderSide.valueOf(sideToken);
-                    Order o = new Order(id, user, price, qty, ts, side);
+                    Order o = new Order(id, user, price, qty, ts, side, "DEFAULT"); // Use DEFAULT instrument for replay
                     System.out.println("Replaying: " + side + " " + qty + " @ " + price);
                     engine.replayOrder(o); // replay mode (no journaling)
                 } catch (Exception e) {

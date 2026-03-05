@@ -2,7 +2,6 @@ package org.example.matching.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
 import lombok.Setter;
 
 @Getter @Setter @AllArgsConstructor
@@ -50,4 +49,38 @@ public class Reservation {
         // Finally, reduce the quantity so we know how much of the order is left to fill
         this.remainingQty -= consumed;
         return  cashUsed;
-    }}
+    }
+
+    // Additional getters needed by the codebase
+    public String getOrderId() {
+        return OrderId;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public Boolean getIsBuy() {
+        return isBuy;
+    }
+
+    public long getReservedCash() {
+        return reservedCash;
+    }
+
+    public long getReservedShares() {
+        return reservedShares;
+    }
+
+    public int getRemainingQty() {
+        return remainingQty;
+    }
+
+    public void setReservedCash(long reservedCash) {
+        this.reservedCash = reservedCash;
+    }
+
+    public void setReservedShares(long reservedShares) {
+        this.reservedShares = reservedShares;
+    }
+}
