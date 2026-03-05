@@ -12,13 +12,22 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service // Tells Spring this is a managed bean
-@RequiredArgsConstructor
 public class InMemoryWalletService implements WalletService {
 
     private final Map<String, Wallet> wallets = new ConcurrentHashMap<>();
     private final Map<String, Reservation> reservations = new ConcurrentHashMap<>();
     private final OrderRepository orderRepository;
     private final String INSTRUMENT = "MARKET";
+
+    // No-arg constructor for Main.java usage
+    public InMemoryWalletService() {
+        this.orderRepository = null;
+    }
+
+    // Constructor for dependency injection
+    public InMemoryWalletService(OrderRepository orderRepository) {
+        this.orderRepository = orderRepository;
+    }
 
     private Wallet ensureWallet(String userId) {
         return wallets.computeIfAbsent(userId, k -> new Wallet(userId));

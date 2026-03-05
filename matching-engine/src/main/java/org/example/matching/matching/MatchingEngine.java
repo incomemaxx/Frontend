@@ -50,25 +50,43 @@
 
 package org.example.matching.matching;
 
+import jakarta.annotation.PostConstruct;
 import org.example.matching.api.dto.OrderBookResponse;
 import org.example.matching.api.dto.PriceLevel;
 import org.example.matching.journal.EventJournal;
 import org.example.matching.model.Order;
 import org.example.matching.model.OrderBook;
 import org.example.matching.model.Trade;
+import org.springframework.stereotype.Service;
 
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
+
+@Service
 public class MatchingEngine {
 
-    private final OrderBook orderBook;
+    private final Map<String, OrderBook> orderBooks = new ConcurrentHashMap<>();
     private final EventJournal journal;
 
     public MatchingEngine() {
-        this.orderBook = new OrderBook();
         this.journal = new EventJournal();
+    }
+
+    @PostConstruct
+    public void init() {
+        // Pre-create books for stocks you want to test
+        orderBooks.put("AAPL", new OrderBook());
+        orderBooks.put("TSLA", new OrderBook());
+        orderBooks.put("BTC", new OrderBook());
+    }
+
+    // Helper method to get the right order book
+    private OrderBook getOrderBook(String instrument) {
+        return orderBooks.computeIfAbsent(instrument, k -> new OrderBook());
     }
 
     // live mode records to journal; record=false used during replay
@@ -77,7 +95,8 @@ public class MatchingEngine {
             journal.appendOrder(order.getId(), order.getUserId(), order.getSide().name(), order.getPrice(), order.getQuantity(), order.getTimestamp());
         }
 
-        List<Trade> trades = orderBook.placeOrder(order);
+        OrderBook book = getOrderBook(order.getInstrument() != null ? order.getInstrument() : "DEFAULT");
+        List<Trade> trades = book.placeOrder(order);
 
         if (record) {
             for (Trade t : trades) {
@@ -113,13 +132,12 @@ public class MatchingEngine {
                 int qty = Integer.parseInt(parts[5]);
                 long ts = Long.parseLong(parts[6]);
                 // create order via your Order constructor (check arg ordering)
-                Order o = new Order(id, user, price, qty, ts, org.example.matching.model.OrderSide.valueOf(side));
+                Order o = new Order(id, user, price, qty, ts, org.example.matching.model.OrderSide.valueOf(side), "DEFAULT");
                 replayOrder(o);
             }
             // ignore TRADE lines during replay
         }
     }
-
     /**
      * Returns a list of price levels for a specific side (bids or asks).
      * It sums up the quantities of all orders at each price point.
@@ -141,14 +159,21 @@ public class MatchingEngine {
      * Creates a full snapshot of the book.
      */
     public OrderBookResponse getSnapshot(String instrument) {
+        OrderBook book = getOrderBook(instrument);
         return OrderBookResponse.builder()
                 .instrument(instrument)
-                .bids(getPriceLevels(orderBook.getBids())) // Use OrderBook's bids
-                .asks(getPriceLevels(orderBook.getAsks()))  // Use OrderBook's asks
+                .bids(getPriceLevels(book.getBids()))
+                .asks(getPriceLevels(book.getAsks()))
                 .build();
     }
 
     public String dumpBook() {
-        return orderBook.dumpBook();
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, OrderBook> entry : orderBooks.entrySet()) {
+            sb.append("=== ORDER BOOK: ").append(entry.getKey()).append(" ===\n");
+            sb.append(entry.getValue().dumpBook());
+            sb.append("\n");
+        }
+        return sb.toString();
     }
 }
