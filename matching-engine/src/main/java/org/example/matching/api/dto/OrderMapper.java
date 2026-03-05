@@ -6,7 +6,7 @@ import org.example.matching.model.OrderSide;
 import java.util.UUID;
 
 public class OrderMapper {
-    public static Order toDomain(OrderRequest request){
+    public static Order toDomain(OrderRequest request) {
         return new Order(
                 UUID.randomUUID().toString(),
                 request.getUserId(),
@@ -14,9 +14,6 @@ public class OrderMapper {
                 (int) request.getQuantity(),
                 System.currentTimeMillis(),
                 OrderSide.valueOf(request.getSide().toUpperCase())
-
-
-
         );
     }
 }

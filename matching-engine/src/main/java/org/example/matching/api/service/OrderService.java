@@ -28,17 +28,20 @@ public class OrderService {
     // In-memory idempotency store: Key -> Previous Response
     private final Map<String, OrderResponse> idempotencyStore = new ConcurrentHashMap<>();
 
-    public OrderResponse processOrder(OrderRequest request){
-    if(idempotencyStore.containsKey(request.getIdempotencyKey())){
-        return idempotencyStore.get(request.getIdempotencyKey());
-    }
+    public OrderResponse processOrder(OrderRequest request) {
+        if (idempotencyStore.containsKey(request.getIdempotencyKey())) {
+            return idempotencyStore.get(request.getIdempotencyKey());
+        }
+        
         Order order = OrderMapper.toDomain(request);
-    if(!riskManager.checkAndReserve(order)){
-        return buildResponse(order, "REJECTED", "Insufficient funds or shares");
-    }
+        
+        if (!riskManager.checkAndReserve(order)) {
+            return buildResponse(order, "REJECTED", "Insufficient funds or shares");
+        }
+        
         eventJournal.appendRaw("ORDER_PLACED: " + order.getId());
 
-        // 5. Matching Engine execution
+        // Matching Engine execution
         List<Trade> trades = matchingEngine.placeOrder(order);
 
         for (Trade trade : trades) {
@@ -50,6 +53,7 @@ public class OrderService {
         idempotencyStore.put(request.getIdempotencyKey(), response);
         return response;
     }
+    
     private OrderResponse buildResponse(Order order, String status, String msg) {
         return OrderResponse.builder()
                 .orderId(order.getId())
@@ -58,6 +62,5 @@ public class OrderService {
                 .timestamp(System.currentTimeMillis())
                 .build();
     }
-
-    }
+}
 

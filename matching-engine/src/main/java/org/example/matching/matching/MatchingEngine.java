@@ -50,12 +50,16 @@
 
 package org.example.matching.matching;
 
+import org.example.matching.api.dto.OrderBookResponse;
+import org.example.matching.api.dto.PriceLevel;
 import org.example.matching.journal.EventJournal;
 import org.example.matching.model.Order;
 import org.example.matching.model.OrderBook;
 import org.example.matching.model.Trade;
 
+import java.util.Deque;
 import java.util.List;
+import java.util.TreeMap;
 
 public class MatchingEngine {
 
@@ -114,6 +118,34 @@ public class MatchingEngine {
             }
             // ignore TRADE lines during replay
         }
+    }
+
+    /**
+     * Returns a list of price levels for a specific side (bids or asks).
+     * It sums up the quantities of all orders at each price point.
+     */
+    private List<PriceLevel> getPriceLevels(TreeMap<Long, Deque<Order>> side) {
+        return side.entrySet().stream()
+                .map(entry -> {
+                    long price = entry.getKey();
+                    // Sum the quantity of every Order sitting in the Deque for this price
+                    long totalQty = entry.getValue().stream()
+                            .mapToLong(Order::getQuantity)
+                            .sum();
+                    return new PriceLevel(price, totalQty);
+                })
+                .toList();
+    }
+
+    /**
+     * Creates a full snapshot of the book.
+     */
+    public OrderBookResponse getSnapshot(String instrument) {
+        return OrderBookResponse.builder()
+                .instrument(instrument)
+                .bids(getPriceLevels(orderBook.getBids())) // Use OrderBook's bids
+                .asks(getPriceLevels(orderBook.getAsks()))  // Use OrderBook's asks
+                .build();
     }
 
     public String dumpBook() {

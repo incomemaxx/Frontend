@@ -84,37 +84,27 @@ public class OrderBook {
 
     private final TreeMap<Long,Deque<Order>> ask = new TreeMap<>();
     private final TreeMap<Long,Deque<Order>> bids = new TreeMap<>(Comparator.reverseOrder());
-    private final Map<String,Long> orderPriceIndex = new HashMap<>();//orderId->price;- this wasnt done
-   // private  EventJournal journal;
+    private final Map<String,Long> orderPriceIndex = new HashMap<>(); // orderId->price
+    
     public OrderBook() {
-     //   this.journal = new EventJournal();
     }
-   public List<Trade> placeOrder(Order incoming){
-//        List<Trade> trades = new ArrayList<>();
-//    long OrdPrice = incoming.price;
-//    int OrdQuantity =
-       List<Trade> trades = new ArrayList<>();
-     //  EventJournal journal  = new EventJournal();
-       if (incoming.getSide() == OrderSide.BUY) {
-       //    journal.append("INPUT: OrderReceived " + incoming.getId() + " Price:" + incoming.getPrice());
-           matchBuy(incoming, trades);
-//           for(Trade t:trades) {
-//               journal.append("MATCH: " + t.getBuyOrderId() + " matched with " + t.getSellOrderId());
-//           }
-           if (incoming.getQuantity() > 0) {
-               addToBook(bids, incoming);
-           }
-       } else {
-          // journal.append("INPUT: OrderReceived " + incoming.getId() + " Price:" + incoming.getPrice());
-
-           matchSell(incoming, trades);
-//           for(Trade t:trades) {
-//               journal.append("MATCH: " + t.getBuyOrderId() + " matched with " + t.getSellOrderId());
-//           }
-
-           if (incoming.getQuantity() > 0) {
-               addToBook(ask, incoming);
-           }
+   public List<Trade> placeOrder(Order incoming) {
+        List<Trade> trades = new ArrayList<>();
+        
+        if (incoming.getSide() == OrderSide.BUY) {
+            matchBuy(incoming, trades);
+            if (incoming.getQuantity() > 0) {
+                addToBook(bids, incoming);
+            }
+        } else {
+            matchSell(incoming, trades);
+            for(Trade t:trades) {
+                // Journal matches if needed
+            }
+            if (incoming.getQuantity() > 0) {
+                addToBook(ask, incoming);
+            }
+        }
        }
        return trades;
    }
@@ -233,6 +223,15 @@ public class OrderBook {
     }
     public Optional<Long> bestBid() {
         return bids.isEmpty() ? Optional.empty() : Optional.of(bids.firstKey());
+    }
+
+    // Add getters for MatchingEngine access
+    public TreeMap<Long, Deque<Order>> getAsks() {
+        return ask;
+    }
+
+    public TreeMap<Long, Deque<Order>> getBids() {
+        return bids;
     }
 
     public String dumpBook() {
