@@ -40,7 +40,8 @@ public class OrderService {
         if (!riskManager.checkAndReserve(order)) {
             return buildResponse(order, "REJECTED", "Insufficient funds or shares");
         }
-        
+
+        orderRepository.save(order);
         eventJournal.appendRaw("ORDER_PLACED: " + order.getId());
 
         // Matching Engine execution

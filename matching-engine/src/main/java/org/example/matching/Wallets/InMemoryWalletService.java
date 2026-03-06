@@ -36,6 +36,7 @@ public class InMemoryWalletService implements WalletService {
     @Override
     public boolean reserveForOrder(Order order) {
         String userId = order.getUserId();
+        String instrument = order.getInstrument();
         Wallet w = ensureWallet(userId);
 
         if (order.getSide().name().equals("BUY")) {
@@ -46,7 +47,7 @@ public class InMemoryWalletService implements WalletService {
             r.setReservedCash(required);
             reservations.put(order.getId(), r);
         } else {
-            if (!w.tryReserveShares(INSTRUMENT, order.getQuantity())) return false;
+            if (!w.tryReserveShares(instrument, order.getQuantity())) return false;
 
             Reservation r = new Reservation(order.getId(), userId, order.getPrice(), order.getQuantity(), false);
             r.setReservedShares(order.getQuantity());
@@ -77,6 +78,12 @@ public void releaseReservation(String orderId){
     }
 
     @Override
+    public void creditUserShares(String userId, String instrument, long shares) {
+        Wallet w = ensureWallet(userId);
+        w.addAvailableShares(instrument, shares);
+    }
+
+    @Override
     public void creditUserCash(String userId, long cash) {
         Wallet w = ensureWallet(userId);
         w.addAvailableCash(cash);
@@ -101,7 +108,7 @@ public void releaseReservation(String orderId){
 
         int qty = (int) trade.getQuantity();
         long tradeValue = trade.getPrice() * (long) qty;
-
+        String instrument = buy.getInstrument();
         // Process Buy Side
         if (buyRes != null) {
             long cashtoDebitFromReserved = buyRes.reduceBy(qty);
@@ -110,13 +117,13 @@ public void releaseReservation(String orderId){
             long refund = cashtoDebitFromReserved - tradeValue;
             if (refund > 0) buyerWallet.addAvailableCash(refund);
 
-            buyerWallet.addAvailableShares(INSTRUMENT, qty);
+            buyerWallet.addAvailableShares(instrument, qty);
         }
 
         // Process Sell Side
         if (sellRes != null) {
             sellRes.reduceBy(qty);
-            sellerWallet.debitReservedShares(INSTRUMENT, (long) qty);
+            sellerWallet.debitReservedShares(instrument, (long) qty);
             sellerWallet.addAvailableCash(tradeValue);
         }
 

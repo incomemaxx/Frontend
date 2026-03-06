@@ -68,6 +68,15 @@ public class Wallet {
         return (val == null) ? 0L : val.get();
     }
 
+    // Methods to get all shares for API responses
+    public ConcurrentHashMap<String, AtomicLong> getAvailableShares() {
+        return availableShares;
+    }
+
+    public ConcurrentHashMap<String, AtomicLong> getReservedShares() {
+        return reservedShares;
+    }
+
     // get the quantity of the shares the available
     //get the qty of reserved of shares
     //pass the shares and the qty to reserve it

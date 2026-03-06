@@ -9,8 +9,9 @@ public interface WalletService {
     void releaseReservation(String orderId);
     void settleTrade(Trade trade);
     
-    // Additional methods needed for testing
+    // Additional methods needed for testing and API
     void creditUserShares(String userId, long shares);
+    void creditUserShares(String userId, String instrument, long shares);
     void creditUserCash(String userId, long cash);
     Wallet getWallet(String userId);
 }
