@@ -30,6 +30,7 @@ org/example/matching/api/dto/OrderMapper.class
 org/example/matching/api/dto/OrderBookResponse.class
 org/example/matching/api/dto/OrderRequest.class
 org/example/matching/config/MatchingEngineConfig.class
+org/example/matching/api/service/MarketDataService.class
 org/example/matching/orderbook/OrderRepository.class
 org/example/matching/MatchingEngineApplication.class
 org/example/matching/model/Wallet.class

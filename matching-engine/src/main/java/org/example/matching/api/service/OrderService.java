@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class OrderService {
 
+    private final MarketDataService marketDataService;
     private final RiskManager riskManager;
     private final MatchingEngine matchingEngine;
     private final WalletService walletService;
@@ -48,9 +49,17 @@ public class OrderService {
         List<Trade> trades = matchingEngine.placeOrder(order);
 
         for (Trade trade : trades) {
+            // so once trade is done manage the cash and shares of the users using their ids and stuff in walletService below
             walletService.settleTrade(trade);
+            marketDataService.UpdateTrade(order.getInstrument(),trade.getPrice(),trade.getQuantity());
             eventJournal.appendRaw("TRADE_SETTLED: " + trade.getBuyOrderId() + " <-> " + trade.getSellOrderId());
         }
+        var book = matchingEngine.getOrderBookForMarketData(order.getInstrument());
+        marketDataService.updateBookTops(
+                order.getInstrument(),
+                book.getBestBid(),
+                book.getBestAsk()
+        );
 
         OrderResponse response = buildResponse(order, "ACCEPTED", "Success");
         idempotencyStore.put(request.getIdempotencyKey(), response);

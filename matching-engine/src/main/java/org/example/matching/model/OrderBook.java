@@ -182,6 +182,14 @@ public class OrderBook {
             }
         }
     }
+    // Inside your OrderBook.java model
+    public Double getBestBid() {
+        return bids.isEmpty() ? 0.0 : bids.lastKey().doubleValue();
+    }
+
+    public Double getBestAsk() {
+        return ask.isEmpty() ? 0.0 : ask.firstKey().doubleValue();
+    }
     private void addToBook(TreeMap<Long,Deque<Order>> bookside, Order order){
        // treemap bookside and order order
 

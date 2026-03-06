@@ -88,6 +88,10 @@ public class MatchingEngine {
     private OrderBook getOrderBook(String instrument) {
         return orderBooks.computeIfAbsent(instrument, k -> new OrderBook());
     }
+    // Add this inside your MatchingEngine class
+    public OrderBook getOrderBookForMarketData(String instrument) {
+        return orderBooks.getOrDefault(instrument, new OrderBook());
+    }
 
     // live mode records to journal; record=false used during replay
     public List<Trade> placeOrder(Order order, boolean record) {
@@ -154,6 +158,7 @@ public class MatchingEngine {
                 })
                 .toList();
     }
+
 
     /**
      * Creates a full snapshot of the book.
