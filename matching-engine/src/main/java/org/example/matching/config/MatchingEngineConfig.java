@@ -24,11 +24,6 @@ public class MatchingEngineConfig {
     }
 
     @Bean
-    public WalletService walletService(OrderRepository orderRepository) {
-        return new InMemoryWalletService(orderRepository);
-    }
-
-    @Bean
     public RiskManager riskManager(WalletService walletService, OrderRepository orderRepository) {
         return new RiskManager(walletService, orderRepository);
     }

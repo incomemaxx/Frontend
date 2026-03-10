@@ -1,8 +1,10 @@
 package org.example.matching.api.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.matching.api.dto.MarketEvent;
 import org.example.matching.api.dto.OrderBookResponse;
 import org.example.matching.api.service.MarketDataService;
+import org.example.matching.api.service.MarketManagmentService;
 import org.example.matching.matching.MatchingEngine;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Map;
 
 @RequestMapping("/api/market")
@@ -18,6 +21,7 @@ import java.util.Map;
 public class MarketController {
     private final MatchingEngine matchingEngine;
     private final MarketDataService marketDataService;
+    private final MarketManagmentService marketManagmentService;
 
 //    public MarketController(MatchingEngine matchingEngine) {
 //        this.matchingEngine = matchingEngine;
@@ -35,8 +39,8 @@ public class MarketController {
     }
     
     @GetMapping("/active")
-    public ResponseEntity<Object> getActiveEvents() {
-        // This would need to be implemented to return active events
-        return ResponseEntity.ok("Active events endpoint not yet implemented");
+    public ResponseEntity<List<MarketEvent>> getActiveEvents() {
+        List<MarketEvent> activeEvents = marketManagmentService.getAllOpenEvents().stream().toList();
+        return ResponseEntity.ok(activeEvents);
     }
 }

@@ -52,7 +52,7 @@ public class MarketManagmentService {
 
     public MarketEvent createEvent(String id, String question, String yesTicker, String noTicker, int minutesFromNow) {
         MarketEvent event = MarketEvent.builder()
-                .evendID(id)
+                .eventID(id)
                 .questions(question)
                 .yesTicker(yesTicker)
                 .noTicker(noTicker)
@@ -64,11 +64,16 @@ public class MarketManagmentService {
         events.put(id, event);
         registerEvent(event); // Populate the lookup maps
 
+        // Admin can make a "mistake" here (e.g. 100,000) 
+        // and it won't break the 50-50 start!
         walletService.creditUserShares("HOUSE_BOT", yesTicker, 100000);
         walletService.creditUserShares("HOUSE_BOT", noTicker, 100000);
+        
+        // Give bot cash to place BUY orders (for market making)
+        walletService.creditUserCash("HOUSE_BOT", 10000000); // 100,000 dollars = 10,000,000 cents
 
-        // Start the bot for this specific event
-        liquidBotService.updateMarketTrigger(yesTicker);
+        // Force the first quote at 50/50
+        liquidBotService.updateMarketTrigger(yesTicker); 
         return event;
     }
 

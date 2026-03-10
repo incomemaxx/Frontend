@@ -7,8 +7,15 @@ import java.util.UUID;
 
 public class OrderMapper {
     public static Order toDomain(OrderRequest request) {
+        String orderId;
+        if ("HOUSE_BOT".equals(request.getUserId())) {
+            orderId = "HOUSE_BOT-" + request.getInstrument() + "-" + request.getSide() + "-" + System.currentTimeMillis();
+        } else {
+            orderId = UUID.randomUUID().toString();
+        }
+        
         Order order = new Order(
-                UUID.randomUUID().toString(),
+                orderId,
                 request.getUserId(),
                 request.getPrice(),
                 (int) request.getQuantity(),

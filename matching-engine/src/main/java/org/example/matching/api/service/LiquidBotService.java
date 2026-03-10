@@ -2,8 +2,10 @@ package org.example.matching.api.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.matching.Wallets.WalletService;
 import org.example.matching.api.dto.OrderRequest;
+import org.example.matching.api.dto.OrderResponse;
+import org.example.matching.api.dto.MarketEvent;
+import org.example.matching.matching.MatchingEngine;
 import org.example.matching.model.OrderSide;
 import org.springframework.stereotype.Service;
 
@@ -15,62 +17,71 @@ import java.util.concurrent.atomic.AtomicLong;
 public class LiquidBotService {
     
     private final OrderService orderService;
-    private final WalletService walletService;
     private final MarketManagmentService marketManagmentService;
+    private final MatchingEngine matchingEngine;
     
     private static final String BOT_ID = "HOUSE_BOT";
-    private static final long INITIAL_INVENTORY = 50000; // Starting YES shares
-    private static final long LIQUIDITY_PARAMETER = 100000; // L parameter for sigmoid
-    
-    public void updateMarketTrigger(String instrument) {
-        // Check if this is a YES contract (NO contracts will be handled automatically)
-        if (!instrument.endsWith("_Y")) return;
-        
-        String yesTicker = instrument;
-        String noTicker = instrument.replace("_Y", "_N");
-        
-        // Cancel existing orders for both sides
-        cancelBotOrders(yesTicker);
-        cancelBotOrders(noTicker);
-        
-        // Recalculate and place new orders
-        recalculateAndPlaceOrders(yesTicker, noTicker, LIQUIDITY_PARAMETER);
-    }
-    
-    private void recalculateAndPlaceOrders(String yesTicker, String noTicker, long L) {
-        // Get current YES inventory
-        long yesInventory = walletService.getWallet(BOT_ID)
-                .getAvailableShares()
-                .getOrDefault(yesTicker, new AtomicLong(0))
-                .get();
-        
-        // Calculate net sold (positive = sold YES, negative = bought YES)
-        long netSold = INITIAL_INVENTORY - yesInventory;
-        
-        // Kalshi sigmoid pricing: Price = 100 / (1 + e^(-netSold / L))
+    private static final int SPREAD = 4;
+
+    public void updateMarketTrigger(String ticker) {
+        MarketEvent event = marketManagmentService.getEventByTicker(ticker);
+        if (event == null) return;
+
+        // 1. Get the displacement (starts at 0)
+        long netSold = event.getVirtualNetSold().get();
+        long L = event.getLiquidity();
+
+        // 2. SIGMOID MATH (Guaranteed 50¢ if netSold is 0)
+        // Price = 100 / (1 + e^(-0 / L)) -> 100 / (1 + 1) = 50
         double exponent = (double) netSold / L;
         long fairPriceYes = (long) (100.0 / (1.0 + Math.exp(-exponent)));
-        
-        // Clamp prices between 1 and 99
+
         fairPriceYes = Math.max(1, Math.min(99, fairPriceYes));
         long fairPriceNo = 100 - fairPriceYes;
+
+        // 3. Update the Order Book
+        refreshBotOrders(event.getYesTicker(), fairPriceYes, true);
+        refreshBotOrders(event.getNoTicker(), fairPriceNo, false);
         
-        // Calculate spread (2 cents each side for 4 cent total spread)
-        long yesBid = Math.max(1, fairPriceYes - 2);
-        long yesAsk = Math.min(99, fairPriceYes + 2);
-        long noBid = Math.max(1, fairPriceNo - 2);
-        long noAsk = Math.min(99, fairPriceNo + 2);
-        
-        // Place new orders with 500 share quantity
-        placeBotOrder(yesTicker, OrderSide.BUY, yesBid, 500);
-        placeBotOrder(yesTicker, OrderSide.SELL, yesAsk, 500);
-        placeBotOrder(noTicker, OrderSide.BUY, noBid, 500);
-        placeBotOrder(noTicker, OrderSide.SELL, noAsk, 500);
-        
-        log.info("Bot updated prices for {}: YES {}-{}, NO {}-{} (inventory: {})", 
-                yesTicker, yesBid, yesAsk, noBid, noAsk, yesInventory);
+        log.info("Bot updated prices for {}: YES {}¢, NO {}¢ (virtualNetSold: {})", 
+                ticker, fairPriceYes, fairPriceNo, netSold);
     }
-    
+
+    // This is called by your OrderService AFTER a trade happens
+    public void recordTrade(String ticker, long quantity, String side) {
+        MarketEvent event = marketManagmentService.getEventByTicker(ticker);
+        if (event == null) return;
+
+        // If a human BUYS from the bot, displacement goes UP
+        // If a human SELLS to the bot, displacement goes DOWN
+        if (side.equalsIgnoreCase("BUY")) {
+            event.getVirtualNetSold().addAndGet(quantity);
+        } else {
+            event.getVirtualNetSold().addAndGet(-quantity);
+        }
+
+        log.info("Recorded trade: {} {} {} shares (virtualNetSold: {})", 
+                ticker, side, quantity, event.getVirtualNetSold().get());
+
+        // Immediately trigger price update based on new displacement
+        updateMarketTrigger(ticker);
+    }
+
+    private void refreshBotOrders(String ticker, long fairPrice, boolean isYesTicker) {
+        // Cancel all existing bot orders for this ticker
+        matchingEngine.cancelAllOrdersForUser(BOT_ID, ticker);
+
+        // Place new orders with 2-cent spread around fair price
+        long bidPrice = Math.max(1, fairPrice - 2);
+        long askPrice = Math.min(99, fairPrice + 2);
+
+        // Place bid order (buy from users)
+        placeBotOrder(ticker, OrderSide.BUY, bidPrice, 500);
+        
+        // Place ask order (sell to users)
+        placeBotOrder(ticker, OrderSide.SELL, askPrice, 500);
+    }
+
     private void placeBotOrder(String ticker, OrderSide side, long price, long quantity) {
         OrderRequest req = new OrderRequest();
         req.setUserId(BOT_ID);
@@ -85,11 +96,5 @@ public class LiquidBotService {
         } catch (Exception e) {
             log.error("Failed to place bot order: {}", req, e);
         }
-    }
-    
-    private void cancelBotOrders(String instrument) {
-        // This would need to be implemented to cancel existing bot orders
-        // For now, we'll rely on the order service to handle idempotency
-        log.info("Cancelling existing bot orders for {}", instrument);
     }
 }

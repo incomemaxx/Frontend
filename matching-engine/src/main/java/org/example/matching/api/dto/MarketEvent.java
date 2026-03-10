@@ -7,13 +7,14 @@ import lombok.NoArgsConstructor;
 import org.example.matching.api.dto.enums.EventStatus;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class MarketEvent {
-    private String evendID;
+    private String eventID;
     private String questions;
     private String yesTicker;
     private String noTicker;
@@ -22,12 +23,20 @@ public class MarketEvent {
     private String outcome;
     private long liquidity;
     
+    // This is the ONLY thing that drives price. Starts at 0.
+    private final AtomicLong virtualNetSold = new AtomicLong(0);
+    
+    // Getter for the virtual counter
+    public AtomicLong getVirtualNetSold() {
+        return virtualNetSold;
+    }
+    
     // Fix the field name typo
     public String getEventID() {
-        return evendID;
+        return eventID;
     }
     
     public void setEventID(String eventID) {
-        this.evendID = eventID;
+        this.eventID = eventID;
     }
 }
