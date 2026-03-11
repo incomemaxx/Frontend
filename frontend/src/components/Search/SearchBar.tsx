@@ -1,6 +1,6 @@
 export default function MaxLogo() {
   return (
-    <div className="flex bg-[#242423]/50 rounded-[50px] h-10 px-3 items-center gap-3 hover:bg-[#242423]/70 transition-all duration-200 cursor-text border border-transparent focus-within:border-[#48CAE4] group">
+    <div className="hidden md:flex bg-[#242423]/50 rounded-[50px] h-10 px-3 items-center gap-3 hover:bg-[#242423]/70 transition-all duration-200 cursor-text border border-transparent focus-within:border-[#48CAE4] group">
       <div className="text-gray-400 group-focus-within:text-[#48CAE4] group-focus-within:scale-110 group-focus-within:rotate-12 transition-all duration-300">
         <svg
           width="20"
