@@ -15,4 +15,5 @@ public class EventRequest {
     private String yesTicker;
     private String noTicker;
     private int expiry; // minutes from now
+    private Long liquidity; // Optional - defaults to 10000 if not provided
 }

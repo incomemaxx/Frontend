@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class MarketManagmentService {
@@ -50,7 +51,10 @@ public class MarketManagmentService {
         return tickerToEvent.get(ticker);
     }
 
-    public MarketEvent createEvent(String id, String question, String yesTicker, String noTicker, int minutesFromNow) {
+    public MarketEvent createEvent(String id, String question, String yesTicker, String noTicker, int minutesFromNow, Long liquidity) {
+        // Use provided liquidity or default to 10000
+        long eventLiquidity = (liquidity != null) ? liquidity : 10000L;
+        
         MarketEvent event = MarketEvent.builder()
                 .eventID(id)
                 .questions(question)
@@ -58,8 +62,7 @@ public class MarketManagmentService {
                 .noTicker(noTicker)
                 .expiry(LocalDateTime.now().plusMinutes(minutesFromNow))
                 .status(EventStatus.OPEN)
-                .liquidity(10000) // Reduced liquidity for visible price movements
-                .virtualNetSold(new AtomicLong(0))
+                .liquidity(eventLiquidity) // Use configurable liquidity
                 .build();
 
         events.put(id, event);

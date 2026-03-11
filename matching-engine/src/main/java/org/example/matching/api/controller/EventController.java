@@ -23,7 +23,8 @@ public class EventController {
                 req.getQuestions(),
                 req.getYesTicker(),
                 req.getNoTicker(),
-                req.getExpiry()
+                req.getExpiry(),
+                req.getLiquidity()
         );
         return ResponseEntity.ok(event);
     }
