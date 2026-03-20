@@ -7,7 +7,7 @@ interface Option {
 
 interface TopicCardProps {
   category: string;
-  categoryIcon: React.ReactNode;
+  categoryIcon?: React.ReactNode;
   title: string;
   date: string;
   options: Option[];

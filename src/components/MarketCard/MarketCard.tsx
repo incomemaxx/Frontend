@@ -1,5 +1,5 @@
-interface Candidate {
-  name: string;
+interface TrendingOption {
+  label: string;
   image: string;
   payout: string;
   odds: string;
@@ -8,22 +8,26 @@ interface Candidate {
 
 interface MarketCardProps {
   title: string;
-  candidates: Candidate[];
+  options: TrendingOption[];
   volume: string;
   marketCount: string;
   newsText: string;
   currentIndex?: number;
   totalCards?: number;
+  onNext?: () => void;
+  onPrev?: () => void;
 }
 
 export default function MarketCard({
   title,
-  candidates,
+  options: candidates,
   volume,
   marketCount,
   newsText,
   currentIndex = 1,
   totalCards = 7,
+  onNext,
+  onPrev,
 }: MarketCardProps) {
   return (
     <div className="bg-[#1a1d1f] rounded-2xl p-6 md:p-8 border border-[#2a2d2f] max-w-225 mx-auto">
@@ -31,7 +35,7 @@ export default function MarketCard({
       <div className="flex justify-between items-start mb-6">
         <h1 className="text-white text-2xl md:text-3xl font-bold">{title}</h1>
         <div className="flex items-center gap-3">
-          <button className="w-10 h-10 rounded-full bg-[#2a2d2f] flex items-center justify-center hover:bg-[#3a3d3f] transition-colors">
+          <button onClick={onPrev} className="w-10 h-10 rounded-full bg-[#2a2d2f] flex items-center justify-center hover:bg-[#3a3d3f] transition-colors">
             <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
@@ -39,7 +43,7 @@ export default function MarketCard({
           <span className="text-gray-400 text-sm">
             {currentIndex} of {totalCards}
           </span>
-          <button className="w-10 h-10 rounded-full bg-[#2a2d2f] flex items-center justify-center hover:bg-[#3a3d3f] transition-colors">
+          <button onClick={onNext} className="w-10 h-10 rounded-full bg-[#2a2d2f] flex items-center justify-center hover:bg-[#3a3d3f] transition-colors">
             <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
@@ -63,11 +67,11 @@ export default function MarketCard({
             <div className="flex items-center gap-3">
               <img
                 src={candidate.image}
-                alt={candidate.name}
+                alt={candidate.label}
                 className="w-10 h-10 rounded-full"
               />
               <div>
-                <h3 className="text-white font-semibold">{candidate.name}</h3>
+                <h3 className="text-white font-semibold">{candidate.label}</h3>
                 <div className={`h-1 w-16 rounded-full mt-1`} style={{ backgroundColor: candidate.color }}></div>
               </div>
             </div>
@@ -110,11 +114,11 @@ export default function MarketCard({
               <div className="flex items-center gap-3 flex-1">
                 <img
                   src={candidate.image}
-                  alt={candidate.name}
+                  alt={candidate.label}
                   className="w-10 h-10 rounded-full"
                 />
                 <div>
-                  <h3 className="text-white font-semibold">{candidate.name}</h3>
+                  <h3 className="text-white font-semibold">{candidate.label}</h3>
                   <div className={`h-1 w-16 rounded-full mt-1`} style={{ backgroundColor: candidate.color }}></div>
                 </div>
               </div>
@@ -147,7 +151,7 @@ export default function MarketCard({
               {candidates.map((candidate, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full`} style={{ backgroundColor: candidate.color }}></div>
-                  <span className="text-gray-400 text-sm">{candidate.name}</span>
+                  <span className="text-gray-400 text-sm">{candidate.label}</span>
                   <span className="text-white text-sm font-semibold">{candidate.odds}</span>
                 </div>
               ))}
