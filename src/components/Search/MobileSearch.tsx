@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import MaxLogo from "../Header/MaxLogo";
 export default function MobileSearch() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
